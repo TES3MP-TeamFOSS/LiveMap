@@ -23,7 +23,7 @@ var updateTime = 200;
     var isHeightMapEnabled = false;
 
 
-    
+
     var markers = {};
     var players;
     var zooming = false;
@@ -32,7 +32,7 @@ var updateTime = 200;
     var playerToFollow = null;
 
     var playerListDiv = document.getElementById("playerList");
-    
+
      var map = L.map('map', {
        maxZoom: 18,
        minZoom: 11,
@@ -43,7 +43,7 @@ var updateTime = 200;
      var northEast = map.unproject([28160, 0], map.getMaxZoom());
      map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
-     L.tileLayer('tiles/{z}/map_{x}_{y}.webp', {
+     L.tileLayer('tiles/webp/{z}/map_{x}_{y}.webp', {
        attribution: 'Map data &copy; Bethesda Softworks',
      }).addTo(map);
 
@@ -64,7 +64,7 @@ var updateTime = 200;
      });
 
     var jsonUpdater = setInterval(checkForUpdates, updateTime);
-    
+
     //do not set this too low or ui becomes a bit unstable
     var playerListUpdater = setInterval(updatePlayerList, 1000);
 
@@ -96,7 +96,7 @@ var updateTime = 200;
                 {
                   markerObject.marker.setLatLng(newPos);
                 }
-                
+
                 markerObject.marker.setRotationAngle(player.rot);
                 if(!markerObject.isOutside)
                 {
@@ -175,10 +175,10 @@ var updateTime = 200;
         }
         else
         {
-          playerListDiv.innerHTML = '<br /><a class="toggleButton" onClick="toggleList()"; style="cursor: pointer">Open menu</a><br />';  
+          playerListDiv.innerHTML = '<br /><a class="toggleButton" onClick="toggleList()"; style="cursor: pointer">Open menu</a><br />';
         }
-        
-        
+
+
      };
 
     function playerNameClicked(key) {
@@ -216,9 +216,9 @@ var updateTime = 200;
 
     map.on('zoomend', function() {
       zooming = false;
-      
+
       var currentZoom = map.getZoom();
-      
+
       playerIcon = L.icon({
         iconUrl: 'assets/img/compass.png',
         iconSize:     [currentZoom*2.2, currentZoom*2.2], // size of the icon
@@ -293,5 +293,5 @@ var updateTime = 200;
       sizeBodyFont();
 
       (function(el) {
-        window.addEventListener('resize', sizeBodyFont);  
+        window.addEventListener('resize', sizeBodyFont);
       }())
