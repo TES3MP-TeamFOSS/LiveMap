@@ -1,0 +1,34 @@
+{
+  "test0":{
+    "y":-112340.953125,
+    "x":19306.78125,
+    "rot":60,
+    "isOutside":false,
+    "pid":0,
+    "cell":"Balmora"
+  },
+  "test1":{
+    "y":-122340.953125,
+    "x":11306.78125,
+    "rot":180,
+    "isOutside":true,
+    "pid":1,
+    "cell":"Balmora"
+  },
+  "test2":{
+    "y":-82340.953125,
+    "x":8306.78125,
+    "rot":270,
+    "isOutside":true,
+    "pid":2,
+    "cell":"Balmora"
+  },
+  "test3":{
+    "y":-3001.100953125,
+    "x":0.78125,
+    "rot":45,
+    "isOutside":true,
+    "pid":3,
+    "cell":"Balmora"
+  }
+}

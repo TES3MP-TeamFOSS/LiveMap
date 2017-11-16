@@ -1,0 +1,54 @@
+html, body {
+  height: 100%;
+  background-color: black;
+}
+
+#map {
+  height: 99%;
+  background-color: black;
+}
+
+#playerList{
+    background-color: rgba(0,0,0,0.5);
+    width: 15vw;
+    min-width: 10em;
+    padding-bottom: 2vh;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+    color: white;
+    display: table;
+    font-size: 100%;
+    padding-left: 2vw;
+}
+
+.tooltip 
+{
+  background-color: rgba(0,0,0,0) !important;
+  color:white !important;
+  border: none !important;
+  font-weight: normal !important;
+  padding-bottom: 25px !important;
+  margin-left: 10px !important;
+  box-shadow: none !important;
+}
+
+.leaflet-tooltip-right:before
+{
+  border: none !important;
+}
+
+.playerName
+{
+  font-size: 1em; 
+}
+
+.resetZoom
+{
+   font-size: 0.75em;
+}
+
+.leaflet-tile-loaded {
+	filter: brightness(1.5) saturate(1.1) !important;
+}
