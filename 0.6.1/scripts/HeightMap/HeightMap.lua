@@ -51,7 +51,7 @@ function HMCollect()
             if tes3mp.IsInExterior(pid) == true then
                 local posx = tes3mp.GetPosX(pid)
                 local posy = tes3mp.GetPosY(pid)
-                local posz = math.ceil( tes3mp.GetPosZ(pid) )
+                local posz = math.ceil(tes3mp.GetPosZ(pid))
 
                 local hitX = false
                 local hitY = false
