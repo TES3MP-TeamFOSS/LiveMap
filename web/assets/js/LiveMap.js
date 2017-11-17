@@ -17,7 +17,6 @@ var liveMapJsonPath = "assets/json/LiveMap.json";
 //This controls json update and marker update cycle in ms, change this to your liking
 var updateTime = 200;
 
-
     //extensions
     //HeightMap.js is needed for this to work
     var isHeightMapEnabled = false;
@@ -43,9 +42,7 @@ var updateTime = 200;
      var northEast = map.unproject([28160, 0], map.getMaxZoom());
      map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
-     L.tileLayer('tiles/webp/{z}/map_{x}_{y}.webp', {
-       attribution: 'Map data &copy; Bethesda Softworks',
-     }).addTo(map);
+     
 
     var currentZoom = map.getZoom();
 
@@ -67,7 +64,37 @@ var updateTime = 200;
 
     //do not set this too low or ui becomes a bit unstable
     var playerListUpdater = setInterval(updatePlayerList, 1000);
+    var browserSupportsWebp;
 
+    init();
+
+    function init()
+    {
+      checkWebpSupport();
+    }
+
+    function checkWebpSupport() {
+      var html = document.documentElement,
+      WebP = new Image();
+      WebP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+      
+      WebP.onload = WebP.onerror = function() {
+          browserSupportsWebp = (WebP.height === 2);
+          addTileLayersToMap();
+      };
+      
+    }
+
+    function addTileLayersToMap()
+    {
+      var tilePath = 'tiles/webp/{z}/map_{x}_{y}.webp';
+      if(!browserSupportsWebp)
+          tilePath = 'tiles/jpg/{z}/map_{x}_{y}.jpg';
+      
+      L.tileLayer(tilePath, {
+       attribution: 'Map data &copy; Bethesda Softworks',
+     }).addTo(map);
+    }
 
     function checkForUpdates() {
       loadJSON(liveMapJsonPath+"?nocache="+(new Date()).getTime(), function(response) {
@@ -295,3 +322,5 @@ var updateTime = 200;
       (function(el) {
         window.addEventListener('resize', sizeBodyFont);
       }())
+
+  
