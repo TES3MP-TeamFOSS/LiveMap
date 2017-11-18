@@ -42,7 +42,7 @@ var updateTime = 200;
      var northEast = map.unproject([28160, 0], map.getMaxZoom());
      map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
-     
+
 
     var currentZoom = map.getZoom();
 
@@ -77,12 +77,12 @@ var updateTime = 200;
       var html = document.documentElement,
       WebP = new Image();
       WebP.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
-      
+
       WebP.onload = WebP.onerror = function() {
           browserSupportsWebp = (WebP.height === 2);
           addTileLayersToMap();
       };
-      
+
     }
 
     function addTileLayersToMap()
@@ -90,7 +90,7 @@ var updateTime = 200;
       var tilePath = 'tiles/webp/{z}/map_{x}_{y}.webp';
       if(!browserSupportsWebp)
           tilePath = 'tiles/jpg/{z}/map_{x}_{y}.jpg';
-      
+
       L.tileLayer(tilePath, {
        attribution: 'Map data &copy; Bethesda Softworks',
      }).addTo(map);
@@ -322,5 +322,3 @@ var updateTime = 200;
       (function(el) {
         window.addEventListener('resize', sizeBodyFont);
       }())
-
-  
