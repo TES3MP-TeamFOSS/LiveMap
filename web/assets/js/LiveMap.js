@@ -12,23 +12,31 @@ in return.  Tuomas Louhelainen */
 //Ensure that you have installed LiveMap.lua in the correct place with correct configurations.
 //Ensure that json-path is set in the LiveMap.lua.
 
-//Change this to point to the same place as LiveMap.lua
-var liveMapJsonPath = "assets/json/LiveMap.json";
-//This controls json update and marker update cycle in ms, change this to your liking
-var updateTime = 200;
+    //Change this to point to the same place as LiveMap.lua
+    var liveMapJsonPath = "assets/json/LiveMap.json";
+
+
+    //user configurable settings
+
+    //json update and marker update time in ms
+    var updateTime = 200;
+    //do map zoom to player when name is clicked
+    var zoomToPlayerWhenClicked = true;
+    //animated zooms, affects performance
+    var animatedZoom = true;
 
     //extensions
     //HeightMap.js is needed for this to work
     var isHeightMapEnabled = false;
-
-
-
+    
+    //do not change anything after this point
     var markers = {};
     var players;
     var zooming = false;
     var showPlayerList = true;
     var markerToFollow = null;
     var playerToFollow = null;
+    var fitPlayers = false;
 
     var playerListDiv = document.getElementById("playerList");
 
@@ -36,7 +44,7 @@ var updateTime = 200;
        maxZoom: 18,
        minZoom: 11,
        crs: L.CRS.Simple
-     }).setView([-0.045, 0.06], 14);
+     }).setView([-0.045, 0.06], 13);
 
      var southWest = map.unproject([0, 25600], map.getMaxZoom());
      var northEast = map.unproject([28160, 0], map.getMaxZoom());
@@ -91,9 +99,11 @@ var updateTime = 200;
       if(!browserSupportsWebp)
           tilePath = 'tiles/jpg/{z}/map_{x}_{y}.jpg';
 
-      L.tileLayer(tilePath, {
-       attribution: 'Map data &copy; Bethesda Softworks',
-     }).addTo(map);
+        L.tileLayer(tilePath, {
+         attribution: 'Map data &copy; Bethesda Softworks',
+         tileSize: 256,
+         updateWhenZooming: false,
+       }).addTo(map);
     }
 
     function checkForUpdates() {
@@ -163,6 +173,9 @@ var updateTime = 200;
             //remove the object from marker-list
             delete markers[key];
          }
+
+         if(fitPlayers)
+            updateFit();
    };
 
      function updatePlayerList() {
@@ -188,6 +201,10 @@ var updateTime = 200;
                 playerString+= " - "+players[key].cell.substring(0,48);
               playerListDiv.innerHTML += '<a class="playerName" onClick="playerNameClicked(\''+key+'\')"; style="cursor: pointer">'+playerString+'</a><br />';
             }
+            if(fitPlayers)
+              playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="toggleFitPlayers()"; style="cursor: pointer">Reset player fit</a>';
+            else
+              playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="toggleFitPlayers()"; style="cursor: pointer">Enable player fit</a>';
             if(playerToFollow!=null)
               playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="resetFollow()"; style="cursor: pointer">Reset follow</a>';
           }
@@ -209,12 +226,33 @@ var updateTime = 200;
      };
 
     function playerNameClicked(key) {
+      fitPlayers = false;
       var marker = markers[key].marker;
       playerToFollow = key;
       markerToFollow = marker;
-      centerOnMarker();
+      if(zoomToPlayerWhenClicked)
+        zoomToMarker();
+      else
+        centerOnMarker();
       updatePlayerList();
     };
+
+    function toggleFitPlayers()
+    {
+      resetFollow();
+      fitPlayers = !fitPlayers;
+    }
+
+    function updateFit()
+    {
+      var markerArray = [];
+      for(var marker in markers)
+      {
+        markerArray.push(markers[marker].marker);
+      }
+      var group = new L.featureGroup(markerArray);
+      map.fitBounds(group.getBounds().pad(0.025));
+    }
 
     function toggleList()
     {
@@ -227,6 +265,10 @@ var updateTime = 200;
       markerToFollow = null;
       playerToFollow = null;
       updatePlayerList();
+      if(zoomToPlayerWhenClicked)
+      {
+        map.setView([-0.045, 0.06], 13);
+      }
     }
 
     function centerOnMarker()
@@ -235,6 +277,18 @@ var updateTime = 200;
       {
         var latLng = markerToFollow.getLatLng();
         map.panTo(latLng,{animate:true,duration:0.05});
+      }
+    }
+
+    function zoomToMarker()
+    {
+      if(markerToFollow!=null)
+      {
+        var latLng = markerToFollow.getLatLng();
+        if(animatedZoom)
+          map.flyTo(latLng, map.getMaxZoom(),{animate:true, duration:2.0}); 
+        else
+          map.setView(latLng,map.getMaxZoom());
       }
     }
 
