@@ -59,15 +59,15 @@ function HeightMapMarkerClickCheck()
     local timeCurrent = os.time()
 
     if heightMapMarkerClick.timestamp ~= nil then
-        --if timeCurrent - heightMapMarkerClick.timestamp >= heightMapMarkerCooldown then
-        local cell = GetCellByExteriorXY(heightMapMarkerClick.x, heightMapMarkerClick.y)
-        --if LoadedCells[cell] ~= nil then
-            tes3mp.LogAppend(1, cell .. " loaded via HeightMap marker.\n")
-            --myMod.LoadCell(cell)
-        --else
-            --tes3mp.LogAppend("HeightMap marker clicked while cooldown still active.\n")
-        --end
-        --end
+        if timeCurrent - heightMapMarkerClick.timestamp >= heightMapMarkerCooldown then
+            local cell = GetCellByExteriorXY(heightMapMarkerClick.x, heightMapMarkerClick.y)
+            if LoadedCells[cell] == nil then
+                tes3mp.LogAppend(1, cell .. " loaded via HeightMap marker.\n")
+                myMod.LoadCell(cell)
+            end
+        else
+            tes3mp.LogAppend("HeightMap marker clicked while cooldown still active.\n")
+        end
     end
 
     tes3mp.StartTimer(timerHeightMapMarkerClickCheck)
