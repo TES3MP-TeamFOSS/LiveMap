@@ -20,7 +20,7 @@ local updateInterval = 1
 local timerLiveMap = tes3mp.CreateTimerEx("TimerLiveMapExpired", time.seconds(updateInterval), "i", 0)
 
 
-tes3mp.StartTimer(MapTimer)
+tes3mp.StartTimer(timerLiveMap)
 
 
 function JsonLoad(fileName)
@@ -68,8 +68,8 @@ function Update()
         end
     end
 
-    Save(pathLM .. "LiveMap.json", Info)
-    tes3mp.StartTimer(MapTimer)
+    JsonSave(pathLM .. "LiveMap.json", Info)
+    tes3mp.StartTimer(timerLiveMap)
 end
 
 
