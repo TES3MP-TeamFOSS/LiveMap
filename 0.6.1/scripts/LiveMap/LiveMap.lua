@@ -13,17 +13,25 @@ time = require ("time")
 -- Add [ LiveMap = require("LiveMap") ] to the top of server.lua
 
 
-local path = "/path/to/assets/json/"
-local updateInterval = 5
-
-local MapTimer = tes3mp.CreateTimerEx("MapTimerExpired", time.seconds(updateInterval), "i", 0)
 local Info = {}
+local Marker = {}
+local pathLM = "/path/to/assets/json/"
+local updateInterval = 1
+local timerLiveMap = tes3mp.CreateTimerEx("TimerLiveMapExpired", time.seconds(updateInterval), "i", 0)
 
 
 tes3mp.StartTimer(MapTimer)
 
 
-function Save(fileName, data, keyOrderArray)
+function JsonLoad(fileName)
+    local file = assert(io.open(fileName, 'r'), 'Error loading file: ' .. fileName);
+    local content = file:read("*all");
+    file:close();
+    return json.decode(content, 1, nil);
+end
+
+
+function JsonSave(fileName, data, keyOrderArray)
     local content = json.encode(data, { indent = true, keyorder = keyOrderArray })
     local file = assert(io.open(fileName, 'w+b'), 'Error loading file: ' .. fileName)
     file:write(content)
@@ -41,9 +49,9 @@ function Update()
           if isOutside == true then
             Info[playerName] = {}
             Info[playerName].pid = pid
-            Info[playerName].x = math.floor( tes3mp.GetPosX(pid) + 0.5 )
-            Info[playerName].y = math.floor( tes3mp.GetPosY(pid) + 0.5 )
-            Info[playerName].rot = math.floor( math.deg( tes3mp.GetRotZ(pid) ) + 0.5 ) % 360
+            Info[playerName].x = math.floor(tes3mp.GetPosX(pid) + 0.5)
+            Info[playerName].y = math.floor(tes3mp.GetPosY(pid) + 0.5)
+            Info[playerName].rot = math.floor( math.deg(tes3mp.GetRotZ(pid)) + 0.5) % 360
             Info[playerName].cell = tes3mp.GetCell(pid)
             Info[playerName].isOutside = isOutside
           else
@@ -60,11 +68,22 @@ function Update()
         end
     end
 
-    Save(path .. "LiveMap.json", Info)
+    Save(pathLM .. "LiveMap.json", Info)
     tes3mp.StartTimer(MapTimer)
 end
 
 
-function MapTimerExpired()
+function GetCellByExteriorXY(x, y)
+    x = x / 8192
+    y = y / 8192
+
+    x = math.floor(x)
+    y = math.floor(y)
+
+    return tostring(x) .. ", " .. tostring(y)
+end
+
+
+function TimerLiveMapExpired()
     Update()
 end
