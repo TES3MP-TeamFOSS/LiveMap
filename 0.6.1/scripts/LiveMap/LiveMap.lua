@@ -14,18 +14,23 @@ time = require("time")
 
 
 local pathJson = "/path/to/assets/json/"
+local heightMapMarkerCooldown = 5
 local intervalLiveMapUpdate = 1
+local intervalHeightMapMarkerClickCheck = 1
 local intervalHeightMapCollect = 1
-local intervalHeightMapSave = 20
+local intervalHeightMapSave = 30
 
 local heightMap = {}
 local heightMapMarkerClick = {}
 local liveMap = {}
+
+local timerHeightMapMarkerClickCheck = tes3mp.CreateTimerEx("TimerHeightMapMarkerClickCheckExpired", time.seconds(intervalHeightMapMarkerClickCheck), "i", 0)
 local timerHeightMapCollect = tes3mp.CreateTimerEx("TimerHeightMapCollectExpired", time.seconds(intervalHeightMapCollect), "i", 0)
 local timerHeightMapSave = tes3mp.CreateTimerEx("TimerHeightMapSaveExpired", time.seconds(intervalHeightMapSave), "i", 0)
 local timerLiveMapUpdate = tes3mp.CreateTimerEx("TimerLiveMapUpdateExpired", time.seconds(intervalLiveMapUpdate), "i", 0)
 
 
+tes3mp.StartTimer(timerHeightMapMarkerClickCheck)
 tes3mp.StartTimer(timerHeightMapCollect)
 tes3mp.StartTimer(timerHeightMapSave)
 tes3mp.StartTimer(timerLiveMapUpdate)
@@ -45,6 +50,27 @@ function JsonSave(fileName, data, keyOrderArray)
     local file = assert(io.open(fileName, 'w+b'), 'Error loading file: ' .. fileName)
     file:write(content)
     file:close()
+end
+
+
+function HeightMapMarkerClickCheck()
+    heightMapMarkerClick = JsonLoad(pathJson .. "HeightMapMarkerClick.json")
+
+    local timeCurrent = os.time()
+
+    if heightMapMarkerClick.timestamp ~= nil then
+        --if timeCurrent - heightMapMarkerClick.timestamp >= heightMapMarkerCooldown then
+        local cell = GetCellByExteriorXY(heightMapMarkerClick.x, heightMapMarkerClick.y)
+        --if LoadedCells[cell] ~= nil then
+            tes3mp.LogAppend(1, cell .. " loaded via HeightMap marker.\n")
+            --myMod.LoadCell(cell)
+        --else
+            --tes3mp.LogAppend("HeightMap marker clicked while cooldown still active.\n")
+        --end
+        --end
+    end
+
+    tes3mp.StartTimer(timerHeightMapMarkerClickCheck)
 end
 
 
@@ -145,6 +171,11 @@ function GetCellByExteriorXY(x, y)
     y = math.floor(y)
 
     return tostring(x) .. ", " .. tostring(y)
+end
+
+
+function TimerHeightMapMarkerClickCheckExpired()
+    HeightMapMarkerClickCheck()
 end
 
 
