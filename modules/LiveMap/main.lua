@@ -7,7 +7,7 @@
 
 
 JsonInterface = require("jsonInterface")
-Config.LiveMap = import(getModFolder() .. "config.lua")
+Config.LiveMap = import(getModuleFolder() .. "config.lua")
 
 
 local timer

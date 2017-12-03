@@ -7,7 +7,7 @@
 
 
 JsonInterface = require("jsonInterface")
-Config.HeightMap = import(getModFolder() .. "config.lua")
+Config.HeightMap = import(getModuleFolder() .. "config.lua")
 
 
 local timerHMCollect
