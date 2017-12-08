@@ -52,6 +52,10 @@
             this.options.rotationOrigin = origin;
             this.update();
             return this;
+        },
+
+        getRotationAngle: function(){
+            return this.options.rotationAngle;
         }
     });
 })();

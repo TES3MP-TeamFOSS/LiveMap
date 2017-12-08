@@ -15,15 +15,18 @@ in return.  Tuomas Louhelainen */
     //Change this to point to the same place as LiveMap.lua
     var liveMapJsonPath = "assets/json/LiveMap.json";
 
-
     //user configurable settings
-
     //json update and marker update time in ms
-    var updateTime = 200;
+    var updateTime = 1000;
     //do map zoom to player when name is clicked
     var zoomToPlayerWhenClicked = true;
     //animated zooms, affects performance
-    var animatedZoom = true;
+    var animatedZoom = false;
+     //player icon size relative to zoom
+    var playerSizeModifier = 1.75;
+    //use smoothing on marker movement
+    var movementSmoothing = true;
+
 
     //extensions
     //HeightMap.js is needed for this to work
@@ -37,41 +40,37 @@ in return.  Tuomas Louhelainen */
     var markerToFollow = null;
     var playerToFollow = null;
     var fitPlayers = false;
-
+    var isProgramaticZoom = false;
     var playerListDiv = document.getElementById("playerList");
 
-     var map = L.map('map', {
-       maxZoom: 18,
-       minZoom: 11,
-       crs: L.CRS.Simple
-     }).setView([-0.045, 0.06], 13);
+    var map = L.map('map', {
+      maxZoom: 20,
+      minZoom: 11,
+      crs: L.CRS.Simple
+    }).setView([-0.045, 0.06], 13);
 
-     var southWest = map.unproject([0, 25600], map.getMaxZoom());
-     var northEast = map.unproject([28160, 0], map.getMaxZoom());
-     map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
-
-
+    var southWest = map.unproject([0, 102400], map.getMaxZoom());
+    var northEast = map.unproject([112640, 0], map.getMaxZoom());
+    map.setMaxBounds(new L.LatLngBounds(southWest, northEast));
 
     var currentZoom = map.getZoom();
 
-     //player icon
-     var playerIcon = L.icon({
-       iconUrl: 'assets/img/compass.png',
-       iconSize:     [currentZoom*2.2, currentZoom*2.2], // size of the icon
-       iconAnchor:   [currentZoom*1.1, currentZoom*1.1], // point of the icon which will correspond to marker's location
-     });
+    //player icon
+    var playerIcon = L.icon({
+      iconUrl: 'assets/img/compass.png',
+      iconSize:     [currentZoom*playerSizeModifier, currentZoom*playerSizeModifier], // size of the icon
+      iconAnchor:   [currentZoom*playerSizeModifier*0.5, currentZoom*playerSizeModifier*0.5], // point of the icon which will correspond to marker's location
+      interactive:false
+    });
 
-     //inside icon
-     var insideIcon = L.icon({
-       iconUrl: 'assets/img/door.png',
-       iconSize:     [currentZoom, currentZoom], // size of the icon
-       iconAnchor:   [currentZoom*0.5, currentZoom*0.5], // point of the icon which will correspond to marker's location
-     });
-
-    var jsonUpdater = setInterval(checkForUpdates, updateTime);
-
-    //do not set this too low or ui becomes a bit unstable
-    var playerListUpdater = setInterval(updatePlayerList, 1000);
+    //inside icon
+    var insideIcon = L.icon({
+      iconUrl: 'assets/img/door.png',
+      iconSize:     [currentZoom, currentZoom], // size of the icon
+      iconAnchor:   [currentZoom*0.5, currentZoom*0.5], // point of the icon which will correspond to marker's location
+      interactive:false
+    });
+    
     var browserSupportsWebp;
 
     init();
@@ -79,7 +78,14 @@ in return.  Tuomas Louhelainen */
     function init()
     {
       checkWebpSupport();
+      checkForUpdates();
+      var jsonUpdater = requestInterval(checkForUpdates, updateTime);
+      if(movementSmoothing)
+        var markerUpdater = requestInterval(updateMarkers, updateTime);
+      var playerListUpdater = requestInterval(updatePlayerList, 1000);
     }
+
+    var startTime = Date.now();
 
     function checkWebpSupport() {
       var html = document.documentElement,
@@ -90,7 +96,6 @@ in return.  Tuomas Louhelainen */
           browserSupportsWebp = (WebP.height === 2);
           addTileLayersToMap();
       };
-
     }
 
     function addTileLayersToMap()
@@ -98,85 +103,103 @@ in return.  Tuomas Louhelainen */
       var tilePath = 'tiles/webp/{z}/map_{x}_{y}.webp';
       if(!browserSupportsWebp)
           tilePath = 'tiles/jpg/{z}/map_{x}_{y}.jpg';
-
-        L.tileLayer(tilePath, {
-         attribution: 'Map data &copy; Bethesda Softworks',
-         tileSize: 256,
-         updateWhenZooming: false,
-       }).addTo(map);
+      L.tileLayer(tilePath, {
+        attribution: 'Map data &copy; Bethesda Softworks',
+        tileSize: 256,
+        updateWhenZooming: false,
+        maxZoom: 25,
+        maxNativeZoom: 18,
+        minZoom: 11,
+        bounds: new L.LatLngBounds(southWest, northEast)
+      }).addTo(map);
     }
 
     function checkForUpdates() {
-      loadJSON(liveMapJsonPath+"?nocache="+(new Date()).getTime(), function(response) {
-      players = JSON.parse(response);
-      if(!zooming)
-        updateMarkers();
+     loadJSON(liveMapJsonPath+"?nocache="+(new Date()).getTime(), function(response) {
+        var tempJson;
+        try {
+          players = JSON.parse(response);
+        } catch (e) { 
+          console.log("Json not updated!");          
+        }
+        if(!movementSmoothing)
+          updateMarkers();
       });
     }
 
-     function updateMarkers() {
-        var markersToDelete = Object.assign({}, markers);
-        for(var key in players)
-        {
-          if(!players.hasOwnProperty(key)) continue;
-
-          var player = players[key];
-          var markerObject = [];
-           //check if we have marker for this index
-            if(key in markers)
+    function updateMarkers() {
+      var markersToDelete = Object.assign({}, markers);
+      for(var key in players)
+      {
+        //jump to next if player doesnt exist
+        if(!players.hasOwnProperty(key)) 
+          continue;
+        var player = players[key];
+        var markerObject = [];
+        //check if we have marker for this index
+        if(key in markers)
+        { 
+          markerObject = markers[key];
+          if(player.isOutside)
+          {
+            var newPos = map.unproject(convertCoord([player.x,player.y]),map.getMaxZoom());
+            //if we are using smoothing use the slideTo-function
+            if(movementSmoothing)
             {
-              markerObject = markers[key];
-              if(player.isOutside)
-              {
-                var newPos = map.unproject(convertCoord([player.x,player.y]),map.getMaxZoom());
-                if(newPos.lat!=markerObject.marker.getLatLng().lat)
-                {
-                  markerObject.marker.setLatLng(newPos);
-                }
-
-                markerObject.marker.setRotationAngle(player.rot);
-                if(!markerObject.isOutside)
-                {
-                  markerObject.marker.setIcon(playerIcon);
-                  markerObject.isOutside = true;
-                }
-              }
-              else if(markerObject.isOutside)
-              {
-                markerObject.marker.setIcon(insideIcon);
-                markerObject.marker.setRotationAngle(0);
-                markerObject.isOutside = false;
-              }
-              delete markersToDelete[key];
+              markerObject.marker.slideTo(newPos,{
+                duration: updateTime,
+                startRotation: markerObject.marker.getRotationAngle(),
+                endRotation: player.rot,
+                keepAtCenter: (markerToFollow!=null && markerToFollow == markerObject.marker),
+              });
             }
-            //if not then create new and add that
             else
             {
-              var tempMarker = L.marker(map.unproject(convertCoord([player.x,player.y]),map.getMaxZoom()), {icon: playerIcon}).addTo(map);
-              markerObject.marker = tempMarker;
-              markerObject.marker.setRotationAngle(player.rot);
-              markerObject.marker.bindTooltip(key,{className: 'tooltip', direction:'right', permanent:true});
-              markers[key] = markerObject;
+              markerObject.marker.setLatLng(newPos);
+              markerObject.marker.setRotationAngle(player.rot);           
             }
-            centerOnMarker();
-         }
-         //loop through markers that we need to remove
-         for(var key in markersToDelete)
-         {
-            //remove following
-            if(playerToFollow==key)
+            if(!markerObject.isOutside)
             {
-              resetFollow();
+              markerObject.marker.setIcon(playerIcon);
+              markerObject.isOutside = true;
             }
-            //remove the marker
-            map.removeLayer(markersToDelete[key].marker);
-            //remove the object from marker-list
-            delete markers[key];
-         }
+          }
+          else if(markerObject.isOutside)
+          {
+            markerObject.marker.setIcon(insideIcon);
+            markerObject.marker.setRotationAngle(0);
+            markerObject.isOutside = false;
+          }
+          delete markersToDelete[key];
+        }
+        //if not then create new and add that
+        else
+        {
+          var tempMarker = L.marker(map.unproject(convertCoord([player.x,player.y]),map.getMaxZoom()), {icon: playerIcon}).addTo(map);
+          markerObject.marker = tempMarker;
+          markerObject.marker.setRotationAngle(player.rot);
+          markerObject.marker.setRotationOrigin("center");
+          markerObject.marker.bindTooltip(key,{className: 'tooltip', direction:'right', permanent:true});
+          markers[key] = markerObject;
+        }
+      }
+      //loop through markers that we need to remove
+      for(var key in markersToDelete)
+      {
+        //remove following
+        if(playerToFollow==key)
+          resetFollow();
+        //remove the marker
+        map.removeLayer(markersToDelete[key].marker);
+        //remove the object from marker-list
+        delete markers[key];
+      }
 
-         if(fitPlayers)
-            updateFit();
-   };
+      if(fitPlayers)
+        updateFit();
+      if(playerToFollow!=null)
+        centerOnMarker();
+    };
 
      function updatePlayerList() {
         if(showPlayerList)
@@ -188,7 +211,6 @@ in return.  Tuomas Louhelainen */
           }
           if(playerCount>0)
           {
-            //playerListDiv.setAttribute("style","height:"+(60+(25*playerCount))+"px");
             playerListDiv.innerHTML = '<h3>'+playerCount+' players online</h3>';
             for(var key in players)
             {
@@ -205,8 +227,10 @@ in return.  Tuomas Louhelainen */
               playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="toggleFitPlayers()"; style="cursor: pointer">Reset player fit</a>';
             else
               playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="toggleFitPlayers()"; style="cursor: pointer">Enable player fit</a>';
+
             if(playerToFollow!=null)
               playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="resetFollow()"; style="cursor: pointer">Reset follow</a>';
+            
           }
           else
           {
@@ -241,6 +265,8 @@ in return.  Tuomas Louhelainen */
     {
       resetFollow();
       fitPlayers = !fitPlayers;
+      if(fitPlayers)
+        updateFit();
     }
 
     function updateFit()
@@ -251,7 +277,8 @@ in return.  Tuomas Louhelainen */
         markerArray.push(markers[marker].marker);
       }
       var group = new L.featureGroup(markerArray);
-      map.fitBounds(group.getBounds().pad(0.025));
+      isProgramaticZoom = true;
+      map.fitBounds(group.getBounds().pad(0.1));
     }
 
     function toggleList()
@@ -269,6 +296,7 @@ in return.  Tuomas Louhelainen */
       {
         map.setView([-0.045, 0.06], 13);
       }
+
     }
 
     function centerOnMarker()
@@ -284,26 +312,37 @@ in return.  Tuomas Louhelainen */
     {
       if(markerToFollow!=null)
       {
-        var latLng = markerToFollow.getLatLng();
+        isProgramaticZoom = true;
+         var latLng = markerToFollow.getLatLng();
         if(animatedZoom)
-          map.flyTo(latLng, map.getMaxZoom(),{animate:true, duration:2.0}); 
+        {
+          map.flyTo(latLng, 18,{animate:true, duration:1.0}); 
+
+        }
         else
           map.setView(latLng,map.getMaxZoom());
       }
     }
 
     map.on("zoomstart", function () {
+      if(!isProgramaticZoom)
+      {
+        if(fitPlayers)
+        {
+          fitPlayers = false;
+        }
+      }
      zooming = true; });
 
     map.on('zoomend', function() {
       zooming = false;
 
-      var currentZoom = map.getZoom();
+      currentZoom = map.getZoom();
 
       playerIcon = L.icon({
         iconUrl: 'assets/img/compass.png',
-        iconSize:     [currentZoom*2.2, currentZoom*2.2], // size of the icon
-        iconAnchor:   [currentZoom*1.1, currentZoom*1.1], // center of the icon which will correspond to marker's location
+        iconSize:     [currentZoom*playerSizeModifier, currentZoom*playerSizeModifier], // size of the icon
+        iconAnchor:   [currentZoom*playerSizeModifier*0.5, currentZoom*playerSizeModifier*0.5], // point of the icon which will correspond to marker's location
       });
 
       //inside icon
@@ -312,11 +351,12 @@ in return.  Tuomas Louhelainen */
         iconSize:     [currentZoom, currentZoom], // size of the icon
         iconAnchor:   [currentZoom*0.5, currentZoom*0.5], // center of the icon which will correspond to marker's location
       });
+      isProgramaticZoom = false;
       updateMarkers();
-      refreshAllMarkers();
+      refreshAllMarkerIcons();
     });
 
-    function refreshAllMarkers()
+    function refreshAllMarkerIcons()
     {
       var temp = 0;
        for(var key in markers)
@@ -332,7 +372,6 @@ in return.  Tuomas Louhelainen */
           }
           temp++;
        }
-       console.log("Refreshed "+temp+" markers");
     }
 
     function loadJSON(file, callback) {
@@ -347,32 +386,98 @@ in return.  Tuomas Louhelainen */
       };
       xobj.send(null);
     }
-
-    var coordinateMultiplier = 16.0;
+    
+    var coordinateMultiplier = 4.0;
 
     function convertCoord(coord)
     {
-      coord[0] = coord[0]/coordinateMultiplier+15358;
-      coord[1] = coord[1]/-coordinateMultiplier+15356;
+      coord[0] = coord[0]/coordinateMultiplier+61444;
+      coord[1] = coord[1]/-coordinateMultiplier+61444;
       return coord;
     }
 
     function reverseCoord(coord)
     {
-      coord[0] = coord[0]*coordinateMultiplier-15358;
-      coord[1] = coord[1]*-coordinateMultiplier-15356;
+      coord[0] = coord[0]*coordinateMultiplier-61444;
+      coord[1] = coord[1]*-coordinateMultiplier-61444;
       return coord;
     }
 
     var fontMax = 150, fontMin = 100;
 
-      function sizeBodyFont() {
-        var fontSize = ((screen.width / window.innerWidth) * 20);
-        document.body.style.fontSize = Math.min(Math.max(fontSize,fontMin),fontMax) + '%';
-      }
+    function sizeBodyFont() {
+      var fontSize = ((screen.width / window.innerWidth) * 20);
+      document.body.style.fontSize = Math.min(Math.max(fontSize,fontMin),fontMax) + '%';
+    }
 
-      sizeBodyFont();
+    sizeBodyFont();
 
-      (function(el) {
-        window.addEventListener('resize', sizeBodyFont);
-      }())
+    (function(el) {
+      window.addEventListener('resize', sizeBodyFont);
+    }());
+
+
+    function randomRange(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function requestAnimFrame(fn){
+    return window.requestAnimationFrame(fn) || setTimeout(callback, 1000 / 60);
+    };
+
+
+    function requestInterval(fn, delay) {
+      if( !window.requestAnimationFrame && !window.webkitRequestAnimationFrame && !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame) && !window.oRequestAnimationFrame && !window.msRequestAnimationFrame)
+        return window.setInterval(fn, delay);
+      var start = new Date().getTime(),
+      handle = new Object();
+      function loop() {
+        var current = new Date().getTime(), delta = current - start;
+        if(delta >= delay) {
+          fn.call();
+          start = new Date().getTime();
+        }
+        handle.value = requestAnimFrame(loop);
+      };
+      handle.value = requestAnimFrame(loop);
+      return handle;
+    };
+
+    function requestTimeout(fn, delay) {
+      
+      if(!window.requestAnimationFrame && !window.webkitRequestAnimationFrame && !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame) && !window.oRequestAnimationFrame && !window.msRequestAnimationFrame)
+        return setTimeout(fn,delay);
+      var start = new Date().getTime(), handle = new Object();
+      function loop(){
+        var current = new Date().getTime(),
+        delta = current - start;
+        delta >= delay ? fn.call() : handle.value = requestAnimFrame(loop);
+      };
+      handle.value = requestAnimFrame(loop);
+      return handle;
+    };
+
+     window.clearRequestTimeout = function(handle) {
+      window.cancelAnimationFrame ? window.cancelAnimationFrame(handle.value) :
+      window.webkitCancelAnimationFrame ? window.webkitCancelAnimationFrame(handle.value) :
+      window.webkitCancelRequestAnimationFrame ? window.webkitCancelRequestAnimationFrame(handle.value) : /* Support for legacy API */
+      window.mozCancelRequestAnimationFrame ? window.mozCancelRequestAnimationFrame(handle.value) :
+      window.oCancelRequestAnimationFrame ? window.oCancelRequestAnimationFrame(handle.value) :
+      window.msCancelRequestAnimationFrame ? window.msCancelRequestAnimationFrame(handle.value) :
+      clearTimeout(handle);
+      };
+
+    window.clearRequestInterval = function(handle) {
+      window.cancelAnimationFrame ? window.cancelAnimationFrame(handle.value) :
+      window.webkitCancelAnimationFrame ? window.webkitCancelAnimationFrame(handle.value) :
+      window.webkitCancelRequestAnimationFrame ? window.webkitCancelRequestAnimationFrame(handle.value) : /* Support for legacy API */
+      window.mozCancelRequestAnimationFrame ? window.mozCancelRequestAnimationFrame(handle.value) :
+      window.oCancelRequestAnimationFrame ? window.oCancelRequestAnimationFrame(handle.value) :
+      window.msCancelRequestAnimationFrame ? window.msCancelRequestAnimationFrame(handle.value) :
+      clearInterval(handle);
+    };
+
+
+
+
+    
