@@ -19,20 +19,24 @@ in return.  Tuomas Louhelainen */
 //isHeightMapEnabled = false;
 //in LiveMap.js and change that to
 //isHeightMapEnabled = true;
+  
+    //These can be changed
+    //HeightMapClick.json location
+    var clickJsonLocation = 'assets/json/HeightMapClick.json';
+    //Post click data to HeightMapClick.php (requires php support)
+    var phpPosting = true;    
+    
 
-
- 	var heightmap;
+    //Do not touch these
+    var heightmap;
     var heightMapMarkers;
     var heightMapRendering;
-
-
+    
     var heightIcon = L.icon({
           iconUrl: 'assets/img/pin.png',
           iconSize: [16, 16],
           iconAnchor: [8, 16],
       });
-
-    var jsonUpdater = setInterval(loadHeightMap, 10000);
 
     init();
     function init()
@@ -41,6 +45,19 @@ in return.  Tuomas Louhelainen */
       heightMapMarkers = L.layerGroup();
       loadHeightMap();
     }
+    
+    var  markerCluster = L.markerClusterGroup(
+        {
+          disableClusteringAtZoom: map.getMaxZoom(),
+          maxClusterRadius: 600,
+          spiderfyOnMaxZoom: false,
+          removeOutsideVisibleBounds: true,
+          // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
+          chunkedLoading: false,
+          chunkInterval: 200, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
+          chunkDelay: 50, // at the end of each interval, give n milliseconds back to system/browser
+          chunkProgress: null
+        });
 
     function loadHeightMap()
     {
@@ -49,37 +66,55 @@ in return.  Tuomas Louhelainen */
       createHeightMapMarkers()
      });
     }
-
-
+   
     function createHeightMapMarkers()
     {
       var heightMapMarkerCount = 0;
       heightMapMarkers.clearLayers();
-
+      markerCluster.clearLayers();
       for(var x in heightmap)
-  		{
-  			for(var y in heightmap[x])
-  			{
-  			  var markerPosition = map.unproject(convertCoord([Number(x),Number(y)]),map.getMaxZoom());
-  			  var marker = L.marker([markerPosition.lat, markerPosition.lng],{icon: heightIcon});
-  			  marker.bindPopup(x+","+y+","+heightmap[x][y]);
-  			  heightMapMarkers.addLayer(marker);
-  			  heightMapMarkerCount++;
-  			}
-  		}
-  		toggleMarkers(heightMapRendering);
+      {
+        for(var y in heightmap[x])
+        {
+          var markerPosition = map.unproject(convertCoord([Number(x),Number(y)]),map.getMaxZoom());
+          var marker = L.marker([markerPosition.lat, markerPosition.lng],{icon: heightIcon, iconAnchor:[8,8]});
+          marker.x = Number(x),
+          marker.y = Number(y);
+          marker.z = Number(heightmap[x][y]);
+          //attach click event
+          if(phpPosting)
+            marker.on('click', postDataToPHP);
+          marker.on('mouseover', addHover);
+          marker.bindPopup("x:"+x+",y:"+y+",z:"+heightmap[x][y]);
+          heightMapMarkers.addLayer(marker);
+          heightMapMarkerCount++;
+          markerCluster.addLayer(marker);
+        }
+      }
     }
 
     function toggleHeightMap()
     {
       heightMapRendering = !heightMapRendering;
-      createHeightMapMarkers();
+      toggleMarkers(heightMapRendering);
     }
 
     function toggleMarkers(bool)
     {
       if(bool)
-        map.addLayer(heightMapMarkers);
+        map.addLayer(markerCluster);
       else
-        map.removeLayer(heightMapMarkers);
+        map.removeLayer(markerCluster);
     }
+
+    function postDataToPHP(e)
+    {
+      var timestamp = Math.round(+new Date()/1000);
+      $.post("assets/php/HeightMapClick.php", { "x":e.target.x, "y":e.target.y,"z":e.target.z,"timestamp":timestamp});
+    }
+
+    function addHover(e)
+    {
+      $(this._icon).addClass('heightMarkerZoom');
+    }
+

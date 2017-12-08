@@ -29,10 +29,9 @@ in return.  Tuomas Louhelainen */
     //use smoothing on marker movement
     var movementSmoothing = true;
 
-
     //extensions
     //HeightMap.js is needed for this to work
-    var isHeightMapEnabled = false;
+    var isHeightMapEnabled = true;
     
     //do not change anything after this point
     var markers = {};

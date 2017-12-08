@@ -52,3 +52,11 @@ html, body {
 .leaflet-tile-loaded {
 	filter: brightness(1.5) saturate(1.1) !important;
 }
+
+.heightMarkerZoom:hover
+{
+  width: 32px !important;
+  height: 32px !important;
+  margin-left: -16px !important;
+  margin-top: -24px !important;
+}
