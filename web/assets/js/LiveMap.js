@@ -24,6 +24,8 @@ in return.  Tuomas Louhelainen */
     var animatedZoom = false;
      //player icon size relative to zoom
     var playerSizeModifier = 1.75;
+    //zoom level to zoom to when following player
+    var playerZoomLevel = 18;
     //use smoothing on marker movement
     var movementSmoothing = true;
 
@@ -316,11 +318,11 @@ in return.  Tuomas Louhelainen */
          var latLng = markerToFollow.getLatLng();
         if(animatedZoom)
         {
-          map.flyTo(latLng, 18,{animate:true, duration:1.0}); 
+          map.flyTo(latLng, playerZoomLevel,{animate:true, duration:1.0}); 
 
         }
         else
-          map.setView(latLng,map.getMaxZoom());
+          map.setView(latLng,playerZoomLevel);
       }
     }
 
