@@ -25,7 +25,8 @@ in return.  Tuomas Louhelainen */
     var clickJsonLocation = 'assets/json/HeightMapClick.json';
     //Post click data to HeightMapClick.php (requires php support)
     var phpPosting = true;    
-    
+    //viewport padding for showing markers, this is added for performance gain, default: -0.2 range -1-0 
+    var markerPadding = -0.2;
 
     //Do not touch these
     var heightmap;
@@ -53,10 +54,11 @@ in return.  Tuomas Louhelainen */
           spiderfyOnMaxZoom: false,
           removeOutsideVisibleBounds: true,
           // When bulk adding layers, adds markers in chunks. Means addLayers may not add all the layers in the call, others will be loaded during setTimeouts
-          chunkedLoading: false,
+          chunkedLoading: true,
           chunkInterval: 200, // process markers for a maximum of ~ n milliseconds (then trigger the chunkProgress callback)
           chunkDelay: 50, // at the end of each interval, give n milliseconds back to system/browser
-          chunkProgress: null
+          chunkProgress: null,
+          paddingValue: markerPadding,
         });
 
     function loadHeightMap()
