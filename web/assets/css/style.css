@@ -1,10 +1,12 @@
 html, body {
   height: 100%;
+  width: 100vw;
   background-color: black;
 }
 
 #map {
   height: 99%;
+  width: 100vw;
   background-color: black;
 }
 
@@ -23,7 +25,7 @@ html, body {
     padding-left: 2vw;
 }
 
-.tooltip 
+.tooltip
 {
   background-color: rgba(0,0,0,0) !important;
   color:white !important;
@@ -41,7 +43,7 @@ html, body {
 
 .playerName
 {
-  font-size: 1em; 
+  font-size: 1em;
 }
 
 .resetZoom

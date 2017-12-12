@@ -5,7 +5,7 @@
 <tuomas.louhelainen@gmail.com> wrote this file.  As long as you retain
 this notice you can do whatever you want with this stuff. If we meet
 some day, and you think this stuff is worth it, you can buy me a beer
-in return.  Tuomas Louhelainen 
+in return.  Tuomas Louhelainen
 
 Description:
 This takes json formatted POST data from HeightMap.js and writes that data to HeightMapMarkerClick.json -file overwriting the previous
@@ -24,12 +24,12 @@ This takes json formatted POST data from HeightMap.js and writes that data to He
 		"z"=> $z,
 		"timestamp"=>$timestamp
 		);
-	
+
 	$jsondata = json_encode($clickData, JSON_PRETTY_PRINT);
 
 	if(file_put_contents($jsonFile, $jsondata)) {
         echo 'Data successfully saved';
     }
-   	else 
+   	else
         echo "error";
 ?>

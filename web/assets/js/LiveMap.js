@@ -32,7 +32,7 @@ in return.  Tuomas Louhelainen */
     //extensions
     //HeightMap.js is needed for this to work
     var isHeightMapEnabled = true;
-    
+
     //do not change anything after this point
     var markers = {};
     var players;
@@ -71,7 +71,7 @@ in return.  Tuomas Louhelainen */
       iconAnchor:   [currentZoom*0.5, currentZoom*0.5], // point of the icon which will correspond to marker's location
       interactive:false
     });
-    
+
     var browserSupportsWebp;
 
     init();
@@ -120,8 +120,8 @@ in return.  Tuomas Louhelainen */
         var tempJson;
         try {
           players = JSON.parse(response);
-        } catch (e) { 
-          console.log("Json not updated!");          
+        } catch (e) {
+          console.log("Json not updated!");
         }
         if(!movementSmoothing)
           updateMarkers();
@@ -133,13 +133,13 @@ in return.  Tuomas Louhelainen */
       for(var key in players)
       {
         //jump to next if player doesnt exist
-        if(!players.hasOwnProperty(key)) 
+        if(!players.hasOwnProperty(key))
           continue;
         var player = players[key];
         var markerObject = [];
         //check if we have marker for this index
         if(key in markers)
-        { 
+        {
           markerObject = markers[key];
           if(player.isOutside)
           {
@@ -157,7 +157,7 @@ in return.  Tuomas Louhelainen */
             else
             {
               markerObject.marker.setLatLng(newPos);
-              markerObject.marker.setRotationAngle(player.rot);           
+              markerObject.marker.setRotationAngle(player.rot);
             }
             if(!markerObject.isOutside)
             {
@@ -231,7 +231,7 @@ in return.  Tuomas Louhelainen */
 
             if(playerToFollow!=null)
               playerListDiv.innerHTML += '<br /><a class="resetZoom" onClick="resetFollow()"; style="cursor: pointer">Reset follow</a>';
-            
+
           }
           else
           {
@@ -317,7 +317,7 @@ in return.  Tuomas Louhelainen */
          var latLng = markerToFollow.getLatLng();
         if(animatedZoom)
         {
-          map.flyTo(latLng, playerZoomLevel,{animate:true, duration:1.0}); 
+          map.flyTo(latLng, playerZoomLevel,{animate:true, duration:1.0});
 
         }
         else
@@ -387,7 +387,7 @@ in return.  Tuomas Louhelainen */
       };
       xobj.send(null);
     }
-    
+
     var coordinateMultiplier = 4.0;
 
     function convertCoord(coord)
@@ -445,7 +445,7 @@ in return.  Tuomas Louhelainen */
     };
 
     function requestTimeout(fn, delay) {
-      
+
       if(!window.requestAnimationFrame && !window.webkitRequestAnimationFrame && !(window.mozRequestAnimationFrame && window.mozCancelRequestAnimationFrame) && !window.oRequestAnimationFrame && !window.msRequestAnimationFrame)
         return setTimeout(fn,delay);
       var start = new Date().getTime(), handle = new Object();
@@ -481,4 +481,3 @@ in return.  Tuomas Louhelainen */
 
 
 
-    

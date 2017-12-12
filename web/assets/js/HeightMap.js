@@ -19,20 +19,20 @@ in return.  Tuomas Louhelainen */
 //isHeightMapEnabled = false;
 //in LiveMap.js and change that to
 //isHeightMapEnabled = true;
-  
+
     //These can be changed
     //HeightMapClick.json location
     var clickJsonLocation = 'assets/json/HeightMapClick.json';
     //Post click data to HeightMapClick.php (requires php support)
-    var phpPosting = true;    
-    //viewport padding for showing markers, this is added for performance gain, default: -0.2 range -1-0 
+    var phpPosting = true;
+    //viewport padding for showing markers, this is added for performance gain, default: -0.2 range -1-0
     var markerPadding = -0.2;
 
     //Do not touch these
     var heightmap;
     var heightMapMarkers;
     var heightMapRendering;
-    
+
     var heightIcon = L.icon({
           iconUrl: 'assets/img/pin.png',
           iconSize: [16, 16],
@@ -46,7 +46,7 @@ in return.  Tuomas Louhelainen */
       heightMapMarkers = L.layerGroup();
       loadHeightMap();
     }
-    
+
     var  markerCluster = L.markerClusterGroup(
         {
           disableClusteringAtZoom: map.getMaxZoom(),
@@ -68,7 +68,7 @@ in return.  Tuomas Louhelainen */
       createHeightMapMarkers()
      });
     }
-   
+
     function createHeightMapMarkers()
     {
       var heightMapMarkerCount = 0;
