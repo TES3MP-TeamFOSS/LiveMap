@@ -31,7 +31,7 @@ in return.  Tuomas Louhelainen */
 
     //extensions
     //HeightMap.js is needed for this to work
-    var isHeightMapEnabled = true;
+    var isHeightMapEnabled = false;
 
     //do not change anything after this point
     var markers = {};
