@@ -151,7 +151,7 @@ function LiveMap.LiveMapUpdate()
 
    jsonInterface.save(pathJson .. "LiveMap.json", liveMap)
 
-   if aPlayerIsLoggedIn then
+   if aPlayerIsLoggedIn() then
       tes3mp.StartTimer(timerLiveMapUpdate)
    end
 end
@@ -167,7 +167,7 @@ function TimerLiveMapUpdateExpired()
 end
 
 
-customEventHooks.registerHandler("OnPlayerConnect", LiveMap.LiveMapUpdate)
+customEventHooks.registerHandler("OnPlayerAuthentified", LiveMap.LiveMapUpdate)
 customEventHooks.registerHandler("OnPlayerDisconnect", LiveMap.LiveMapUpdate)
 customEventHooks.registerHandler("OnServerPostInit", LiveMap.LiveMapUpdate)
 customEventHooks.registerHandler("OnServerExit", LiveMap.UnloadMarkerCell)
